@@ -33,37 +33,6 @@ public class MemberRepositoryV0 {
         }
     }
 
-    /**
-     * Statement = sql을 그래도 넣는 것
-     * PrepareStatement = 파라미터를 바인딩, Statement를 상속받음
-     */
-    private void close(Connection con, Statement stmt, ResultSet rs){
-        if(rs != null){
-            try {
-                rs.close();
-            } catch (SQLException e) {
-                log.info("error", e);
-            }
-        }
-        if(stmt != null){
-            try {
-                stmt.close();
-            } catch (SQLException e) {
-                log.info("error", e);   //여기서 에러가 발생하면 딱히 처리할 수 있는게 없음
-            }
-        }
-
-        //외부 TCP connection을 사용하는 것이므로 닫아줘여함
-        //위에서 SQLExceotion이 터져도 이 밑에 메소드에 영향을 주지 않는다.
-        if(con != null){
-            try {
-                con.close();
-            } catch (SQLException e) {
-                log.info("error", e);
-            }
-        }
-    }
-
     public Member findById(String memberId) throws SQLException {
         String sql = "select * from member where member_id = ?";
 
@@ -92,6 +61,59 @@ public class MemberRepositoryV0 {
             throw e;
         } finally {
             close(con, pstmt, rs);  //이 순서대로 해제
+        }
+    }
+
+    public void update(String memberId, int money) throws SQLException {
+        String sql = "update member set money=? where member_id=?";
+
+        Connection con = null;
+        PreparedStatement pstmt = null;
+
+        try{
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
+            pstmt.setInt(1, money);
+            pstmt.setString(2, memberId);
+            int resultSize = pstmt.executeUpdate();
+            log.info("resultSize={}", resultSize);
+        }catch (SQLException e){
+            log.error("db error", e);
+            e.printStackTrace();
+            throw e;
+        } finally {
+            close(con, pstmt, null);
+        }
+    }
+
+    /**
+     * Statement = sql을 그래도 넣는 것
+     * PrepareStatement = 파라미터를 바인딩, Statement를 상속받음
+     */
+    private void close(Connection con, Statement stmt, ResultSet rs){
+        if(rs != null){
+            try {
+                rs.close();
+            } catch (SQLException e) {
+                log.info("error", e);
+            }
+        }
+        if(stmt != null){
+            try {
+                stmt.close();
+            } catch (SQLException e) {
+                log.info("error", e);   //여기서 에러가 발생하면 딱히 처리할 수 있는게 없음
+            }
+        }
+
+        //외부 TCP connection을 사용하는 것이므로 닫아줘여함
+        //위에서 SQLExceotion이 터져도 이 밑에 메소드에 영향을 주지 않는다.
+        if(con != null){
+            try {
+                con.close();
+            } catch (SQLException e) {
+                log.info("error", e);
+            }
         }
     }
 
