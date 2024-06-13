@@ -86,6 +86,26 @@ public class MemberRepositoryV0 {
         }
     }
 
+    public void delete(String memberId) throws SQLException {
+        String sql = "delete from member where member_id=?";
+
+        Connection con = null;
+        PreparedStatement pstmt = null;
+
+        try{
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
+            pstmt.setString(1, memberId);
+            pstmt.executeUpdate();
+        }catch (SQLException e){
+            log.error("db error", e);
+            e.printStackTrace();
+            throw e;
+        } finally {
+            close(con, pstmt, null);
+        }
+    }
+
     /**
      * Statement = sql을 그래도 넣는 것
      * PrepareStatement = 파라미터를 바인딩, Statement를 상속받음
