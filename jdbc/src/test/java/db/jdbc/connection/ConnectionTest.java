@@ -1,5 +1,6 @@
 package db.jdbc.connection;
 
+import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -19,6 +20,22 @@ public class ConnectionTest {
         Connection con2 = DriverManager.getConnection(URL, USERNAME, PASSWORD); //한개 더 얻음 총 2개 생성
         log.info("connection={}, class={}", con1, con1.getClass());
         log.info("connection={}, class={}", con2, con2.getClass());
+    }
+
+    @Test
+    void dataSourceConnectionPool() throws SQLException, InterruptedException {
+        //커넥션 풀링
+        //spring에서 jdbc를 쓰면 자동으로 import 해줌
+        //implement로 datasource를 구현하고 있음
+        HikariDataSource dataSource = new HikariDataSource(); //히카리꺼
+        dataSource.setJdbcUrl(URL);
+        dataSource.setUsername(USERNAME);
+        dataSource.setPassword(PASSWORD);
+        dataSource.setMaximumPoolSize(10);  //커넥션을 스레드에 풀 수 만큼 채운다
+        dataSource.setPoolName("MyPool");
+
+        useDataSource(dataSource);
+        Thread.sleep(1000);
     }
 
     @Test
