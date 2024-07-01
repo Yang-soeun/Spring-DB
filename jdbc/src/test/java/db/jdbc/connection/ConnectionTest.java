@@ -23,22 +23,6 @@ public class ConnectionTest {
     }
 
     @Test
-    void dataSourceConnectionPool() throws SQLException, InterruptedException {
-        //커넥션 풀링
-        //spring에서 jdbc를 쓰면 자동으로 import 해줌
-        //implement로 datasource를 구현하고 있음
-        HikariDataSource dataSource = new HikariDataSource(); //히카리꺼
-        dataSource.setJdbcUrl(URL);
-        dataSource.setUsername(USERNAME);
-        dataSource.setPassword(PASSWORD);
-        dataSource.setMaximumPoolSize(10);  //커넥션을 스레드에 풀 수 만큼 채운다
-        dataSource.setPoolName("MyPool");
-
-        useDataSource(dataSource);
-        Thread.sleep(1000);
-    }
-
-    @Test
     void dataSourceDriverManger() throws SQLException {
         //DriverMangerDataSource - 항상 새로운 커넥션을 획득
         /**
@@ -49,6 +33,28 @@ public class ConnectionTest {
         DriverManagerDataSource dataSource = new DriverManagerDataSource(URL, USERNAME, PASSWORD);   //스프링에서 제공
         useDataSource(dataSource);
     }
+
+    @Test
+    void dataSourceConnectionPool() throws SQLException, InterruptedException {
+        //커넥션 풀링
+        //spring에서 jdbc를 쓰면 자동으로 import 해줌
+        //implement로 datasource를 구현하고 있음
+        HikariDataSource dataSource = new HikariDataSource(); //히카리꺼 -> 스프링에서 jdbc를 쓰면 자동으로 import됨
+        dataSource.setJdbcUrl(URL);
+        dataSource.setUsername(USERNAME);
+        dataSource.setPassword(PASSWORD);
+        dataSource.setMaximumPoolSize(10);  //커넥션을 스레드에 풀 수 만큼 채운다
+        dataSource.setPoolName("MyPool");
+
+        useDataSource(dataSource);
+        Thread.sleep(1000);
+    }
+
+    /**
+     * connection이 maximumPoolSize를 넘는다면 커넥션을 얻을때까지 block이 된다.
+     * 얼마정도 기다리고 예외를 터트릴지 설정할 수 있음 -> 너무 길게 가져가지 않는게 좋음
+     */
+
 
     private void useDataSource(DataSource dataSource) throws SQLException {
         Connection con1 = dataSource.getConnection();
