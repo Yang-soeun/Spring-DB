@@ -1,11 +1,8 @@
 package db.jdbc.service;
 
-/**
- * 기본 동작, 트랜잭션이 없어서 문제가 발생하는 상황 확인
- */
-
 import db.jdbc.domain.Member;
 import db.jdbc.repository.MemberRepositoryV1;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,7 +12,11 @@ import java.sql.SQLException;
 
 import static db.jdbc.connection.ConnectionConst.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+/**
+ * 기본 동작, 트랜잭션이 없어서 문제가 발생하는 상황 확인
+ */
 class MemberServiceV1Test {
     public static final String MEMBER_A = "memberA";
     public static final String MEMBER_B = "memberB";
@@ -29,6 +30,13 @@ class MemberServiceV1Test {
         DriverManagerDataSource dataSource = new DriverManagerDataSource(URL, USERNAME, PASSWORD);
         memberRepository = new MemberRepositoryV1(dataSource);
         memberService = new MemberServiceV1(memberRepository);
+    }
+
+    @AfterEach
+    void after() throws SQLException {
+        memberRepository.delete(MEMBER_A);
+        memberRepository.delete(MEMBER_B);
+        memberRepository.delete(MEMBER_EX);
     }
 
     @Test
@@ -48,5 +56,20 @@ class MemberServiceV1Test {
         Member findMemberB = memberRepository.findById(memberB.getMemberId());
         assertThat(findMemberA.getMoney()).isEqualTo(8000);
         assertThat(findMemberB.getMoney()).isEqualTo(12000);
+    }
+
+    @Test
+    @DisplayName("이체 중 예외 발생")
+    void accountTransferEx() throws SQLException {
+        //given
+        Member memberA = new Member(MEMBER_A, 10000);
+        Member memberEx = new Member(MEMBER_EX, 10000);
+        memberRepository.save(memberA);
+        memberRepository.save(memberEx);
+
+        //when //then
+        assertThatThrownBy(() ->  memberService.accountTransfer(memberA.getMemberId(), memberEx.getMemberId(), 2000))
+                .isInstanceOf(IllegalStateException.class);
+
     }
 }
