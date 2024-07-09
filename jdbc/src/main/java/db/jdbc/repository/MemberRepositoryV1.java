@@ -1,6 +1,5 @@
 package db.jdbc.repository;
 
-import db.jdbc.connection.DBConnectionUtil;
 import db.jdbc.domain.Member;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.support.JdbcUtils;
