@@ -22,6 +22,12 @@ public class MemberRepositoryV2 {
         this.dataSource = dataSource;
     }
 
+    /**
+     * JDBC 반복 문제
+     * 지금까지 작성한 MemberRepository 코드는 순수한 JDBC를 사용했다.
+     * 이 코드들은 유사한 코드의 반복이 너무 많다 -> try, catch, finally
+     * 커넥션을 열고, preparedStatement 를 사용하고, 결과를 매핑하고, 실행하고, 커넥션과 리소스를 정리한다.
+     */
     public Member save(Member member) throws SQLException {
         String sql = "insert into member(member_id, money) values (?, ?)";
         Connection con = null;
@@ -103,28 +109,6 @@ public class MemberRepositoryV2 {
             JdbcUtils.closeResultSet(rs);
             JdbcUtils.closeStatement(pstmt);
 //            JdbcUtils.closeConnection(con); //닫으면 안됨
-        }
-    }
-
-    public void update(String memberId, int money) throws SQLException {
-        String sql = "update member set money=? where member_id=?";
-
-        Connection con = null;
-        PreparedStatement pstmt = null;
-
-        try{
-            con = getConnection();
-            pstmt = con.prepareStatement(sql);
-            pstmt.setInt(1, money);
-            pstmt.setString(2, memberId);
-            int resultSize = pstmt.executeUpdate();
-            log.info("resultSize={}", resultSize);
-        }catch (SQLException e){
-            log.error("db error", e);
-            e.printStackTrace();
-            throw e;
-        } finally {
-            close(con, pstmt, null);
         }
     }
 

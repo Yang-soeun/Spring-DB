@@ -19,6 +19,16 @@ public class MemberServiceV2 {
     private final DataSource dataSource; //커넥션을 얻기 위해서 필요함
     private final MemberRepositoryV2 memberRepository;
 
+    //핵심 비즈니스 로직과 JDBC 기술이 섞여 있어서 유지보수 하기 어렵다
+
+    /**
+     * 트랜잭션 문제: 트랜잭션을 적용하면서 생긴 문제
+     * 1. 누수 문제: 트랜젹선을 적용하기 위해 JDBC 구현 기술이 서비스 계충에 누수되었다.
+     * 2. 트랜잭션 동기화 문제:
+     * - 같은 트랜잭션을 유지하기 위해 커넥션을 파라미터로 넘겨야 한다.
+     * - 이때 똑같은 기능도 트랜잭션용 기능과 트랜잭션을 유지하지 않아도 되는 기능으로 분리해야 하는 문제가 발생한다.
+     * 3. 트랜잭션 적용 반복 문제
+     */
     public void accountTransfer(String fromId, String toId, int money) throws SQLException {
         Connection con = dataSource.getConnection();
         try{
@@ -34,6 +44,12 @@ public class MemberServiceV2 {
         }
     }
 
+    /**
+     * 예외 누수 문제: 데이터 접근 계층의 JDBC 구현 기술 예외가 서비스 계층으로 전파된다.
+     * SQLException은 체크 예외이기 때문에 데이터 접근 계층을 호출한 서비스 계층에서 해당 예외를 잡아서 처리하거나 명시적으로 throws를 통해서 다시
+     * 밖으로 던져야 한다.
+     * SQLException은 JDBC 전용 기술이다. 향후 jpa나 다른 데이터 접근 기술을 사용하면, 그에 맞는 다른 예외로 변경해야 하고, 결국 서비스 코드도 수정해야 한다.
+     */
     private void bizLogin(Connection con, String fromId, String toId, int money) throws SQLException {
         Member fromMember = memberRepository.findById(con, fromId);
         Member toMember = memberRepository.findById(con, toId);
