@@ -1,6 +1,7 @@
 package db.jdbc.repository;
 
 import db.jdbc.domain.Member;
+import db.jdbc.repository.ex.MyDBException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.jdbc.support.JdbcUtils;
@@ -11,25 +12,21 @@ import java.util.NoSuchElementException;
 
 
 /**
- * 트랜잭션 - 트랜잭션 매니저
- * DatSourceUtils.getConnection()
- * DatSourceUtils.releaseConnection()
+ * 예외 누수 문제 해결
+ * 체크 예외를 런타임 예외로 변경
+ * MemberRepository 인터페이스 사용
+ * throws SQLException 제거
  */
 @Slf4j
-public class MemberRepositoryV3{
+public class MemberRepositoryV4_1 implements MemberRepository{
     private final DataSource dataSource;    //dataSource 의존관계 주입
 
-    public MemberRepositoryV3(DataSource dataSource) {
+    public MemberRepositoryV4_1(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
-    /**
-     * JDBC 반복 문제
-     * 지금까지 작성한 MemberRepository 코드는 순수한 JDBC를 사용했다.
-     * 이 코드들은 유사한 코드의 반복이 너무 많다 -> try, catch, finally
-     * 커넥션을 열고, preparedStatement 를 사용하고, 결과를 매핑하고, 실행하고, 커넥션과 리소스를 정리한다.
-     */
-    public Member save(Member member) throws SQLException {
+    @Override
+    public Member save(Member member){
         String sql = "insert into member(member_id, money) values (?, ?)";
         Connection con = null;
         PreparedStatement pstmt = null; //사용해서 데이터베이스에 쿼리를 날림
@@ -42,15 +39,14 @@ public class MemberRepositoryV3{
             pstmt.executeUpdate();  //실행 - insert 할 때, 숫자를 반환: insert건 수(영향을 받은 row 수)
             return member;
         }catch (SQLException e){
-            log.error("db error", e);
-            e.printStackTrace();
-            throw e;
+            throw new MyDBException(e);
         } finally {
             close(con, pstmt, null);
         }
     }
 
-    public Member findById(String memberId) throws SQLException {
+    @Override
+    public Member findById(String memberId) {
         String sql = "select * from member where member_id = ?";
 
         Connection con = null;
@@ -74,14 +70,14 @@ public class MemberRepositoryV3{
             }
 
         } catch(SQLException e){
-            log.error("db error", e);
-            throw e;
+            throw new MyDBException(e);
         } finally {
             close(con, pstmt, rs);  //이 순서대로 해제
         }
     }
 
-    public void update(String memberId, int money) throws SQLException {
+    @Override
+    public void update(String memberId, int money) {
         String sql = "update member set money=? where member_id=?";
 
         Connection con = null;
@@ -95,15 +91,14 @@ public class MemberRepositoryV3{
             int resultSize = pstmt.executeUpdate();
             log.info("resultSize={}", resultSize);
         }catch (SQLException e){
-            log.error("db error", e);
-            e.printStackTrace();
-            throw e;
+            throw new MyDBException(e);
         } finally {
             close(con, pstmt, null);
         }
     }
 
-    public void delete(String memberId) throws SQLException {
+    @Override
+    public void delete(String memberId) {
         String sql = "delete from member where member_id=?";
 
         Connection con = null;
@@ -115,9 +110,7 @@ public class MemberRepositoryV3{
             pstmt.setString(1, memberId);
             pstmt.executeUpdate();
         }catch (SQLException e){
-            log.error("db error", e);
-            e.printStackTrace();
-            throw e;
+            throw new MyDBException(e);
         } finally {
             close(con, pstmt, null);
         }
